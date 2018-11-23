@@ -14,8 +14,9 @@ class MainWindow(QMainWindow):
         self.setGeometry(300, 300, 500, 400)
         # Create database session
         self.session = dataInfo.initDataBase()
-        test = dataInfo.Costs("Bike", 500, "No comments :C")
-        self.session.add(test)
+        #test = dataInfo.Costs("Bike", 500, "No comments :C")
+        #self.session.add(test)
+        #self.session.commit()
         self.widget = QWidget()
         self.createTable()
         self.layout = QVBoxLayout(self.widget)
@@ -29,7 +30,7 @@ class MainWindow(QMainWindow):
         self.table.setRowCount(40)
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["Date", "Bought", "Amount", "Comment"])
-        
+        self.table.itemClicked.connect(self.cell_item_one_click_event)
         all_boughts = self.session.query(dataInfo.Costs).all()
         self.last_row = 0
         for bought in all_boughts:
@@ -38,8 +39,11 @@ class MainWindow(QMainWindow):
             self.table.setItem(self.last_row, 2, QTableWidgetItem(str(bought.amount)))
             self.table.setItem(self.last_row, 3, QTableWidgetItem(bought.comment))
             self.last_row += 1
-    
 
+    def cell_item_one_click_event(self):
+        row = self.table.currentRow()
+        col = self.table.currentColumn()
+        print("Content: {}\n".format(self.table.item(row, col).text()))
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
