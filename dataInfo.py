@@ -1,8 +1,9 @@
+from datetime import date
+
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Column, Integer, String, MetaData, Date, Float
 from sqlalchemy.ext.declarative import declarative_base
-
-from datetime import date
+from sqlalchemy.exc import OperationalError
 
 Base = declarative_base()
 
@@ -25,8 +26,12 @@ class Costs(Base):
         )
 
 def initDataBase():
-    engine = create_engine("mysql://mrgreenstar:ThePassword@localhost:3306/everyday_costs")
-    Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    return session
+    try:
+        engine = create_engine("mysql://mrgreenstar:ThePassword@localhost:3306/everyday_costs")
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        return session
+    except OperationalError:
+        print("Can't connect to database")
+    

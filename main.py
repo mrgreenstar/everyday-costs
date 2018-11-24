@@ -1,8 +1,11 @@
 import sys
+from datetime import date
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QHeaderView
-from PyQt5.QtWidgets import QTableWidgetItem, QVBoxLayout, QAbstractScrollArea, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QHeaderView, QAction, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QTableWidgetItem, QAbstractScrollArea, QWidget, QPushButton, QLineEdit, QLabel
 from PyQt5.Qt import Qt
+from PyQt5.QtGui import QIcon
+
 import dataInfo
 
 class MainWindow(QMainWindow):
@@ -15,9 +18,16 @@ class MainWindow(QMainWindow):
         self.setGeometry(10, 300, 500, 400)
         # Create database session
         self.session = dataInfo.initDataBase()
-        #test = dataInfo.Costs("Bike", 500, "No comments :C")
-        #self.session.add(test)
-        #self.session.commit()
+        if not self.session:
+            sys.exit()
+        
+        # Toolbar
+        add = QAction(QIcon('static/add.png'), "Add new bought", self)
+        add.triggered.connect(self.output)
+        self.toolbar = self.addToolBar("Add")
+        self.toolbar.addAction(add)
+        
+        # Table
         self.widget = QWidget()
         self.createTable()
         self.layout = QVBoxLayout(self.widget)
@@ -25,6 +35,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.widget)
 
         self.show()
+
+    def output(self):
+        self.add_window = DialogWindow()
     
     def createTable(self):
         self.table = QTableWidget(self)
@@ -58,8 +71,49 @@ class MainWindow(QMainWindow):
             if event.key() == Qt.Key_Backspace:
                 row = self.table.currentRow()
                 col = self.table.currentColumn()
-                self.table.item(row, col).setText('')
+                self.table.item(row, col).setText(None)
+
+class DialogWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Add new bought")
+        self.setMinimumWidth(500)
+        self.setMinimumHeight(250)
         
+        self.widget = QWidget()
+        # Add button
+        self.btn = QPushButton("Add", self)
+        self.btn.clicked.connect(self.on_click)
+        self.date_label = QLabel("Date:")
+        self.date_line = QLineEdit(str(date.today()), self)
+        self.bought_thing_label = QLabel("What you bought:")
+        self.bought_thing_line = QLineEdit(self)
+        self.amount_label = QLabel("Amount:")
+        self.amount_line = QLineEdit(self)
+        self.comment_label = QLabel("Comment about bought:")
+        self.comment_line = QLineEdit(self)
+        # Layout
+        self.vbox = QVBoxLayout()
+        self.vbox.addStretch(1)
+        # Add all lines and labels
+        self.vbox.addWidget(self.date_label)
+        self.vbox.addWidget(self.date_line)
+        self.vbox.addWidget(self.bought_thing_label)
+        self.vbox.addWidget(self.bought_thing_line)
+        self.vbox.addWidget(self.amount_label)
+        self.vbox.addWidget(self.amount_line)
+        self.vbox.addWidget(self.comment_label)
+        self.vbox.addWidget(self.comment_line)
+        self.vbox.addWidget(self.btn)
+
+        self.widget.setLayout(self.vbox)
+        self.setCentralWidget(self.widget)
+
+        self.show()
+
+    def on_click(self):
+        print("Here")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
