@@ -25,13 +25,18 @@ class Costs(Base):
             self.id, self.date, self.bought_thing, self.amount, self.comment
         )
 
-def initDataBase():
-    try:
-        engine = create_engine("mysql://mrgreenstar:ThePassword@localhost:3306/everyday_costs")
-        Base.metadata.create_all(engine)
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        return session
-    except OperationalError:
-        print("Can't connect to database")
-    
+class SingleSession():
+    _instance = None
+
+    @staticmethod
+    def getInstance():        
+        if SingleSession._instance == None:
+            try:
+                engine = create_engine("mysql://mrgreenstar:ThePassword@localhost:3306/everyday_costs")
+                Base.metadata.create_all(engine)
+                Session = sessionmaker(bind=engine)
+                SingleSession()
+                SingleSession._instance = Session()
+            except OperationalError:
+                print("Can't connect to database")
+        return SingleSession._instance
