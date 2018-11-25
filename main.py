@@ -44,9 +44,10 @@ class MainWindow(QMainWindow):
     
     def create_table(self):
         self.table = QTableWidget(self)
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Date", "Bought", "Amount", "Comment"])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(["Date", "Bought", "Amount", "Comment", "Id"])
         self.table.itemClicked.connect(self.cell_item_one_click_event)
+        self.table.setColumnHidden(4, True)
         self.refill_table()
         
         self.table_header = self.table.horizontalHeader()
@@ -54,6 +55,7 @@ class MainWindow(QMainWindow):
         self.table_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.table_header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.table_header.setSectionResizeMode(3, QHeaderView.Stretch)
+        self.table_header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
 
     def refill_table(self):
         # Clear table
@@ -69,27 +71,29 @@ class MainWindow(QMainWindow):
             self.table.setItem(last_row, 1, QTableWidgetItem(bought.bought_thing))
             self.table.setItem(last_row, 2, QTableWidgetItem(str(bought.amount)))
             self.table.setItem(last_row, 3, QTableWidgetItem(bought.comment))
+            self.table.setItem(last_row, 4, QTableWidgetItem(str(bought.id)))
             last_row += 1
 
     def cell_item_one_click_event(self):
         row = self.table.currentRow()
         col = self.table.currentColumn()
-        print("Content: {}\n".format(self.table.item(row, col).text()))
     
     def keyPressEvent(self, event):
         # To delete info from current cell
         if int(event.modifiers()) == Qt.ControlModifier:
             if event.key() == Qt.Key_Backspace:
-                row = self.table.currentRow()
-                col = self.table.currentColumn()
-                self.table.item(row, col).setText(None)
+                delete_id = self.table.item(
+                    self.table.currentRow(), self.table.columnCount() - 1).text()
+                self.table.removeRow(self.table.currentRow())
+                obj = self.session.query(dataInfo.Costs).filter(dataInfo.Costs.id==int(delete_id))
+                obj.delete()
+                self.session.commit()
 
 class SecondWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Add new bought")
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(250)
+        self.setFixedSize(500, 250)
         
         self.widget = QWidget()
         # Add button
