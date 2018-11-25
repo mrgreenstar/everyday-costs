@@ -1,5 +1,5 @@
 import sys
-from datetime import date
+from datetime import date, datetime
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QHeaderView, QAction, QHBoxLayout, QVBoxLayout
 from PyQt5.QtWidgets import QTableWidgetItem, QAbstractScrollArea, QWidget, QPushButton, QLineEdit, QLabel, QDialog
@@ -23,10 +23,10 @@ class MainWindow(QMainWindow):
             sys.exit()
         
         # Toolbar
-        add = QAction(QIcon('static/add.png'), "Add new bought", self)
-        add.triggered.connect(self.open_add_window)
+        addBtn = QAction(QIcon('static/add.png'), "Add new bought", self)
+        addBtn.triggered.connect(self.open_add_window)
         self.toolbar = self.addToolBar("Add")
-        self.toolbar.addAction(add)
+        self.toolbar.addAction(addBtn)
         
         # Table
         self.widget = QWidget()
@@ -41,12 +41,12 @@ class MainWindow(QMainWindow):
         self.add_window = SecondWindow()
         self.add_window.exec_()
         self.refill_table()
-    
+
     def create_table(self):
         self.table = QTableWidget(self)
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["Date", "Bought", "Amount", "Comment", "Id"])
-        self.table.itemClicked.connect(self.cell_item_one_click_event)
+        self.table.itemChanged.connect(self.save_changes)
         self.table.setColumnHidden(4, True)
         self.refill_table()
         
@@ -74,10 +74,6 @@ class MainWindow(QMainWindow):
             self.table.setItem(last_row, 4, QTableWidgetItem(str(bought.id)))
             last_row += 1
 
-    def cell_item_one_click_event(self):
-        row = self.table.currentRow()
-        col = self.table.currentColumn()
-    
     def keyPressEvent(self, event):
         # To delete info from current cell
         if int(event.modifiers()) == Qt.ControlModifier:
@@ -87,6 +83,19 @@ class MainWindow(QMainWindow):
                 self.table.removeRow(self.table.currentRow())
                 obj = self.session.query(dataInfo.Costs).filter(dataInfo.Costs.id==int(delete_id))
                 obj.delete()
+                self.session.commit()
+
+    def save_changes(self, item):
+        current_item = self.table.item(item.row(), self.table.columnCount() - 1)
+        if current_item:
+            current_bought = self.session.query(dataInfo.Costs).filter(
+                dataInfo.Costs.id==int(current_item.text())).first() 
+            if current_bought:
+                current_bought.date = self.table.item(item.row(), 0).text()
+                current_bought.bought_thing = self.table.item(item.row(), 1).text()
+                current_bought.amount = float(self.table.item(item.row(), 2).text())
+                current_bought.comment = self.table.item(item.row(), 3).text()
+                print("here")
                 self.session.commit()
 
 class SecondWindow(QDialog):
